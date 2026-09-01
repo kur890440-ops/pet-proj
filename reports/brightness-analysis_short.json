@@ -1,0 +1,62 @@
+{
+  "current_brightness_control": {
+    "input_min": 1,
+    "input_max": 255,
+    "pwm_min": 0,
+    "pwm_max": 255,
+    "pwm_resolution_bits": 8,
+    "pwm_frequency_hz": 0,
+    "mapping_description": "brightness:uint8_t меняется шагом 8 и ограничен constrain(...,1,255). CHSV(hue,255,brightness) в FastLED преобразует V примерно в floor(V²/256)+1; при выключении выводится 0."
+  },
+  "main_reason": "Шаг 8 сочетается с 8-битным целочисленным квадратичным преобразованием FastLED. Внизу диапазона уровни сливаются или скачут: 1→PWM1, 8→1, 16→2, 24→3, 32→5.",
+  "additional_reasons": [
+    "Из-за шага 8 доступны лишь около 33 уровней brightness из 255.",
+    "Округление выполняется при HSV→RGB и применении TypicalLEDStrip; сильнее всего оно влияет на малые значения.",
+    "TypicalLEDStrip масштабирует R/G/B как 255/176/240, поэтому результат зависит от hue.",
+    "analogWrite и PWM Nano не используются; частота внутреннего PWM зависит от версии WS2812B и из кода неизвестна."
+  ],
+  "perceptual_intervals": [
+    {
+      "from": 1,
+      "to": 8,
+      "actual_brightness_changes": false,
+      "perceived_change": "almost_invisible",
+      "explanation": "Вход меняется, но оба достижимых значения дают примерно PWM=1."
+    },
+    {
+      "from": 8,
+      "to": 32,
+      "actual_brightness_changes": true,
+      "perceived_change": "clearly_visible",
+      "explanation": "PWM меняется примерно 1,2,3,5; относительные скачки велики."
+    },
+    {
+      "from": 32,
+      "to": 96,
+      "actual_brightness_changes": true,
+      "perceived_change": "visible",
+      "explanation": "PWM растет примерно 5–37; отдельные шаги остаются заметными."
+    },
+    {
+      "from": 96,
+      "to": 192,
+      "actual_brightness_changes": true,
+      "perceived_change": "visible",
+      "explanation": "PWM растет примерно 37–145; квадратичная кривая дает близкий к равномерному визуальный шаг."
+    },
+    {
+      "from": 192,
+      "to": 255,
+      "actual_brightness_changes": true,
+      "perceived_change": "weak",
+      "explanation": "PWM растет примерно 145–255; изменения слабее, но расчетно не исчезают."
+    }
+  ],
+  "problem_intervals": [],
+  "estimated_perceptual_curve": "Оценка: PWM≈(V/255)², восприятие≈PWM^(1/2.2), итог≈(V/255)^0.91. Границы расчетные; цвет, питание и конкретный WS2812B влияют на результат.",
+  "gamma_correction_needed": false,
+  "recommended_gamma": 2.0,
+  "confidence": "medium",
+  "conclusion": "FastLED уже создает приблизительную gamma-кривую. Неплавность вызвана крупным шагом и квантованием снизу. Интервалов, где PWM меняется, а яркость практически неизменна, расчет не выявил; 1–8 исключен, поскольку PWM там не меняется.",
+  "finished": true
+}
